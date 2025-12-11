@@ -1,25 +1,192 @@
-# Laravel + React Starter Kit
+🏦 Bank Management System (OOAD Project)
 
-## Introduction
+A comprehensive, modular banking software solution designed to automate core banking operations. This project applies Object-Oriented Analysis and Design (OOAD) principles to ensure scalability, security, and data integrity.
 
-Our React starter kit provides a robust, modern starting point for building Laravel applications with a React frontend using [Inertia](https://inertiajs.com).
+The system features a Role-Based Access Control (RBAC) architecture, separating functionalities for Admins, Cashiers, Loan Officers, and a self-service Customer Portal.
 
-Inertia allows you to build modern, single-page React applications using classic server-side routing and controllers. This lets you enjoy the frontend power of React combined with the incredible backend productivity of Laravel and lightning-fast Vite compilation.
+🚀 Key Features
 
-This React starter kit utilizes React 19, TypeScript, Tailwind, and the [shadcn/ui](https://ui.shadcn.com) and [radix-ui](https://www.radix-ui.com) component libraries.
+🔐 Security & Architecture
 
-## Official Documentation
+Role-Based Access Control (RBAC): Middleware-protected routes ensuring strictly separated access for Admins, Cashiers, Loan Officers, and Customers.
 
-Documentation for all Laravel starter kits can be found on the [Laravel website](https://laravel.com/docs/starter-kits).
+Atomic Transactions: All financial operations (Transfers, Loan Disbursements, EMI Payments) are wrapped in Database Transactions to prevent data inconsistency.
 
-## Contributing
+Secure Authentication: Powered by Laravel Fortify with dedicated flows for Employee and Customer login.
 
-Thank you for considering contributing to our starter kit! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+👥 User Roles & Modules
 
-## Code of Conduct
+1. 👨‍💼 Admin
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Employee Management: Create and manage staff accounts.
 
-## License
+Role Assignment: Dynamically assign roles (Cashier, Loan Officer) to users.
 
-The Laravel + React starter kit is open-sourced software licensed under the MIT license.
+System Dashboard: View high-level metrics (Total Assets, Total Employees, Pending Loans).
+
+2. 💵 Cashier (Teller)
+
+Customer Management: Register new customers (KYC), update profiles, and manage linked accounts.
+
+Account Operations: Open Savings, Current, or Fixed Deposit accounts.
+
+Teller Services: Process cash Deposits, Withdrawals, and Internal Transfers with account lookup validation.
+
+3. 📋 Loan Officer
+
+Loan Lifecycle: Review and process loan applications.
+
+Approval & Disbursement: Automated fund disbursement to the customer's account upon approval.
+
+EMI Tracking: View generated amortization schedules and track payment status (Pending/Paid/Late).
+
+Manual Collections: Process cash payments for EMIs.
+
+4. 🏠 Customer Portal (Self-Service)
+
+Self-Registration: Public registration form for new clients.
+
+Dashboard: View total holdings, active accounts, and recent transaction history.
+
+Fund Transfer: Transfer money to other accounts securely.
+
+Loan Services: Apply for loans online and pay EMIs directly from linked savings accounts.
+
+🛠️ Technology Stack
+
+Backend: Laravel 11 (PHP 8.2+)
+
+Frontend: React (TypeScript/TSX)
+
+Glue: Inertia.js (Monolithic SPA feel)
+
+Styling: Tailwind CSS
+
+Database: MySQL
+
+Icons: Lucide React
+
+⚙️ Installation & Setup
+
+Follow these steps to set up the project locally.
+
+Prerequisites
+
+PHP >= 8.2
+
+Composer
+
+Node.js & NPM
+
+MySQL
+
+Steps
+
+Clone the Repository
+
+git clone [https://github.com/SOHAIB65309/bank-management-system.git](https://github.com/SOHAIB65309/bank-management-system.git)
+cd bank-management-system
+
+
+Install Backend Dependencies
+
+composer install
+
+
+Install Frontend Dependencies
+
+npm install
+
+
+Environment Setup
+
+Copy .env.example to .env.
+
+Configure your MySQL database credentials in .env.
+
+cp .env.example .env
+php artisan key:generate
+
+
+Database Migration & Seeding (Crucial)
+
+This command creates the tables and populates the system with required Roles and Default Users.
+
+php artisan migrate:fresh --seed
+
+
+Run the Application
+
+Open two terminals:
+
+# Terminal 1 (Backend)
+php artisan serve
+
+
+# Terminal 2 (Frontend)
+npm run dev
+
+
+🔑 Default Credentials
+
+Use the following credentials to test the different roles in the system. Password for all users is: 12345678.
+
+Role
+
+Email
+
+Capabilities
+
+Admin
+
+admin@bank.com
+
+Full system access, Employee creation.
+
+Cashier
+
+cashier@bank.com
+
+Transactions, Customer KYC, Accounts.
+
+Loan Officer
+
+loan.officer@bank.com
+
+Loan Approvals, EMI tracking.
+
+Customer
+
+alice@test.com
+
+Customer Portal access.
+
+Customer
+
+bob@test.com
+
+Customer Portal access.
+
+📂 Project Structure
+
+app/Models: Contains Eloquent models (User, Customer, Account, Loan, Transaction, Emi).
+
+app/Http/Controllers: Backend logic (AdminController, LoanController, TransactionController, CustomerPortalController).
+
+resources/js/Pages: React views organized by module (Admin, Customer, Transaction, LoanOfficer).
+
+routes/web.php: Route definitions using role middleware for security.
+
+👥 Contributors
+
+Muneeza Fayyaz (Customer Management & Documentation)
+
+Dua (Account & Transaction Management)
+
+Sohaib Anjum (Loan Management & Database Design)
+
+Muhammad Shahid (Admin Management & Security)
+
+📄 License
+
+This project is open-sourced software licensed under the MIT license.
