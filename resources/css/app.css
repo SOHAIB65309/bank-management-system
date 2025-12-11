@@ -141,3 +141,34 @@
         @apply bg-background text-foreground;
     }
 }
+@layer utilities {
+    /* KEYFRAMES */
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulseSlow {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 0.5; }
+    }
+
+    /* ANIMATION UTILITIES */
+    .animate-fade-in {
+        animation: fadeIn 1s ease-out forwards;
+    }
+
+    .animate-fade-in-up {
+        /* You can adjust duration and timing function as needed */
+        animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .animate-pulse-slow {
+        animation: pulseSlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+}

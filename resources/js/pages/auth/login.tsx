@@ -10,6 +10,7 @@ import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
+import React from 'react'; // Ensure React is imported
 
 interface LoginProps {
     status?: string;
@@ -24,10 +25,18 @@ export default function Login({
 }: LoginProps) {
     return (
         <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to log in"
+            // --- FIX: Clarify the title for the single login portal ---
+            title="Employee Portal Login"
+            description="Enter your authorized bank credentials to access the management system."
+            // --- END FIX ---
         >
-            <Head title="Log in" />
+            <Head title="Employee Login" />
+
+            {status && (
+                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                    {status}
+                </div>
+            )}
 
             <Form
                 {...store.form()}
@@ -58,7 +67,7 @@ export default function Login({
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="ml-auto text-sm"
+                                            className="ml-auto text-sm text-primary hover:text-primary-dark"
                                             tabIndex={5}
                                         >
                                             Forgot password?
@@ -88,7 +97,7 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="mt-4 w-full bg-primary hover:bg-primary-dark transition"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
@@ -110,11 +119,6 @@ export default function Login({
                 )}
             </Form>
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </AuthLayout>
     );
 }

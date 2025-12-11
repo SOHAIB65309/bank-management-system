@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -48,5 +49,29 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+    public function roles(): BelongsToMany
+    {
+        // Explicitly setting the pivot table name to 'role_user'
+        return $this->belongsToMany(Roles::class, 'role_users', 'user_id', 'role_id')->withTimestamps();
+    }
+
+    /**
+     * Check if the user has a specific role.
+     */
+    public function hasRole($roles): bool
+    {
+        // Ensure roles is an array
+        $roles = is_array($roles) ? $roles : [$roles];
+
+        // Convert role inputs to lowercase for consistent checking
+        $roles = array_map('strtolower', $roles);
+
+        // Get the names of the user's current roles (already loaded after auth)
+        $userRoleNames = $this->roles->pluck('name')->map('strtolower')->all();
+
+        // Check if the user has any of the required roles
+        // We compare the required role list against the user's role names
+        return count(array_intersect($roles, $userRoleNames)) > 0;
     }
 }
