@@ -9,16 +9,6 @@ interface CustomerLayoutProps extends PropsWithChildren {
 
 export default function CustomerLayout({ children, breadcrumbs }: CustomerLayoutProps) {
     const { auth } = usePage<SharedData>().props;
-    
-    // Check if the user is *not* an employee (e.g., they are a basic customer)
-    // We assume a customer user might be someone without an employee role.
-    const isEmployee = auth.user.roles.length > 0;
-    
-    // Safety check: if an employee somehow lands here, they should use the Admin/Cashier layout
-    if (isEmployee) {
-        return <div className="p-8 text-red-600">Access Error: Employees should use the standard Dashboard.</div>;
-    }
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Customer Portal" />

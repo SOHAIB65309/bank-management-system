@@ -109,6 +109,7 @@
     |-- apple-touch-icon.png
     |-- favicon.ico
     |-- favicon.svg
+    |-- hot
     |-- index.php
     |-- logo.svg
     |-- robots.txt
@@ -123,7 +124,9 @@
                     |-- Controllers
                         |-- AccountController.ts
                         |-- AdminController.ts
+                        |-- CustomerAuthController.ts
                         |-- CustomerController.ts
+                        |-- CustomerPortalController.ts
                         |-- DashboardController.ts
                         |-- index.ts
                         |-- LoanController.ts
@@ -265,9 +268,12 @@
             |-- customer
                 |-- CustomerCreate.tsx
                 |-- CustomerEdit.tsx
+                |-- CustomerEmiPay.tsx
                 |-- CustomerIndex.tsx
                 |-- CustomerPortal.tsx
+                |-- CustomerRegister.tsx
                 |-- CustomerShow.tsx
+                |-- CustomerTransfer.tsx
                 |-- EmiIndex.tsx
                 |-- LoanApply.tsx
             |-- dashboard.tsx
@@ -297,10 +303,22 @@
                 |-- index.ts
             |-- appearance
                 |-- index.ts
+            |-- customer
+                |-- emis
+                    |-- index.ts
+                |-- index.ts
+                |-- loan
+                    |-- apply
+                        |-- index.ts
+                    |-- index.ts
+                |-- register
+                    |-- index.ts
             |-- customers
                 |-- index.ts
             |-- index.ts
             |-- loans
+                |-- applications
+                    |-- index.ts
                 |-- emis
                     |-- index.ts
                 |-- index.ts

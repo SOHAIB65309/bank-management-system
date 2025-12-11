@@ -11,7 +11,7 @@ class loans extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['customer_id', 'amount', 'interest_rate', 'term_months', 'status'];
+    protected $fillable = ['customer_id', 'amount', 'interest_rate', 'term_months', 'status','approved_at'];
 
     // One-to-Many inverse: A Loan belongs to one Customer
     public function customer(): BelongsTo
@@ -22,6 +22,6 @@ class loans extends Model
     // One-to-Many relationship: A Loan has many EMIs
     public function emis(): HasMany
     {
-        return $this->hasMany(Emis::class);
+        return $this->hasMany(Emis::class,'loan_id');
     }
 }

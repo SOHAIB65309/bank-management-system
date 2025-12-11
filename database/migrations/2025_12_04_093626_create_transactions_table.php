@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained()->onDelete('restrict'); // Don't delete transactions if account exists
-            $table->enum('type', ['Deposit', 'Withdrawal', 'Transfer']);
+            $table->enum('type', ['Deposit', 'Withdrawal', 'Transfer (Out)','Loan Disbursement','Transfer (In)']);
             $table->decimal('amount', 15, 2);
             $table->text('description')->nullable();
             $table->timestamps();

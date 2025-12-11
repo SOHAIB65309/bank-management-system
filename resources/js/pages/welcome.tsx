@@ -57,7 +57,7 @@ const Welcome: React.FC<WelcomeProps> = ({ canRegister = true }) => {
                                     Employee Login
                                 </Link>
                                 {canRegister && (
-                                    <Link href={register()} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition">
+                                    <Link href={'/customer/register'} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition">
                                         Register
                                     </Link>
                                 )}

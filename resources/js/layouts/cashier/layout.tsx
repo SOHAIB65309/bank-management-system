@@ -9,7 +9,6 @@ interface CashierLayoutProps extends PropsWithChildren {
 }
 
 export default function CashierLayout({ children, breadcrumbs }: CashierLayoutProps) {
-    // Note: Role check is primarily done via Laravel Middleware, but can be replicated here.
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <div className="cashier-content-wrapper">

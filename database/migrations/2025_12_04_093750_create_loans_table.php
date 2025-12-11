@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->decimal('amount', 15, 2);
             $table->decimal('interest_rate', 5, 2); // e.g., 9.50%
             $table->integer('term_months');
+            $table->timestamp('approved_at')->nullable();
             $table->enum('status', ['Pending', 'Approved', 'Rejected', 'Paid'])->default('Pending');
             $table->timestamps();
         });

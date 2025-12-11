@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\emis;
-use App\Models\loans;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\loans;
+use App\Models\emis;
+use App\Models\customers;
+use App\Models\transactions;
+use App\Models\accounts; // Ensure Account model is imported
 use App\Http\Requests\StoreLoanApplicationRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,12 +35,12 @@ class LoanController extends Controller
         $denominator = $powerTerm - 1;
 
         if ($denominator == 0) {
-            throw new \Exception("EMI Calculation failed: Denominator is zero.");
+             throw new \Exception("EMI Calculation failed: Denominator is zero.");
         }
 
         return round($numerator / $denominator, 2);
     }
-
+    
     /**
      * Display a listing of loan applications and active loans.
      */
@@ -45,7 +49,7 @@ class LoanController extends Controller
         $status = $request->input('status', 'Pending');
         $search = $request->input('search');
 
-        $loansQuery = loans::with('customer:id,name,email');
+        $loansQuery = Loans::with('customer:id,name,email');
 
         if ($status !== 'All') {
             $loansQuery->where('status', $status);
@@ -54,7 +58,7 @@ class LoanController extends Controller
         if ($search) {
             $loansQuery->whereHas('customer', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                      ->orWhere('email', 'like', "%{$search}%");
             })->orWhere('id', $search);
         }
 
@@ -66,7 +70,7 @@ class LoanController extends Controller
             'loanStatuses' => ['All', 'Pending', 'Approved', 'Rejected', 'Paid'],
         ]);
     }
-
+    
     /**
      * Processes loan application creation (customer submits or staff enters).
      */
@@ -89,14 +93,14 @@ class LoanController extends Controller
             return redirect()->back()->with('error', 'Loan submission failed.');
         }
     }
-
+    
     /**
      * Approves a loan, disburses funds (optional), and creates the EMI schedule.
      */
     public function approve(Request $request, Loans $loan)
     {
         $request->validate(['action' => 'required|in:approve,reject']);
-
+        
         if ($loan->status !== 'Pending') {
             return redirect()->back()->with('error', "Loan is already {$loan->status}.");
         }
@@ -106,7 +110,7 @@ class LoanController extends Controller
             $loan->save();
             return redirect()->back()->with('success', 'Loan application rejected.');
         }
-     
+
         try {
             DB::transaction(function () use ($loan) {
                 $loan->status = 'Approved';
@@ -115,15 +119,15 @@ class LoanController extends Controller
 
                 // 1. Calculate EMI
                 $emiAmount = $this->calculateEmi(
-                    $loan->amount,
-                    $loan->interest_rate,
+                    $loan->amount, 
+                    $loan->interest_rate, 
                     $loan->term_months
                 );
-
+                
                 // 2. Generate EMI Schedule
                 $emiRecords = [];
                 $startDate = now()->addMonth()->startOfMonth(); // First EMI due next month
-
+                
                 for ($i = 0; $i < $loan->term_months; $i++) {
                     $emiRecords[] = [
                         'loan_id' => $loan->id,
@@ -134,20 +138,40 @@ class LoanController extends Controller
                         'updated_at' => now(),
                     ];
                 }
+                
+                // FIX: Use singular Emi::insert
+                Emis::insert($emiRecords);
+                
+                // --- 3. Loan Disbursement Logic ---
+                $customer = Customers::find($loan->customer_id);
+                
+                // Find or Create Current Account
+                $disbursementAccount = $customer->accounts()
+                                               ->where('account_type', 'Current')
+                                               ->first();
 
-                emis::insert($emiRecords);
-
-                // OPTIONAL: Disburse funds to a primary customer account (Implementation depends on account finding logic)
-                /*
-                $customer = Customer::find($loan->customer_id);
-                $account = $customer->accounts()->where('account_type', 'Savings')->first();
-                if ($account) {
-                    $account->balance += $loan->amount;
-                    $account->save();
-                    // Record disbursement transaction
-                    Transaction::create([ ... ]);
+                if (!$disbursementAccount) {
+                    // Create Current Account if it doesn't exist
+                    $disbursementAccount = Accounts::create([
+                        'customer_id' => $customer->id,
+                        'account_type' => 'Current',
+                        'balance' => 0.00,
+                        'status' => 'Active',
+                    ]);
                 }
-                */
+                
+                // Disburse funds to the account
+                $disbursementAccount->balance += $loan->amount;
+                $disbursementAccount->save();
+                
+                // Record disbursement transaction
+                Transactions::create([
+                    'account_id' => $disbursementAccount->id,
+                    'type' => 'Loan Disbursement',
+                    'amount' => $loan->amount,
+                    'description' => "Loan #{$loan->id} approved and disbursed.",
+                ]);
+                // --- End Disbursement Logic ---
             });
 
             return redirect()->back()->with('success', "Loan #{$loan->id} approved and EMI schedule generated. Monthly EMI: $" . number_format($emiAmount, 2));
@@ -166,6 +190,7 @@ class LoanController extends Controller
         $status = $request->input('status', 'Pending');
         $search = $request->input('search');
 
+        // FIX: Use singular Emi::with
         $emisQuery = Emis::with(['loan.customer:id,name']);
 
         if ($status !== 'All') {
@@ -177,7 +202,7 @@ class LoanController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             });
         }
-
+        
         $emis = $emisQuery->orderBy('due_date')->paginate(20)->withQueryString();
 
         return Inertia::render('LoanOfficer/EmiIndex', [
@@ -186,7 +211,7 @@ class LoanController extends Controller
             'emiStatuses' => ['All', 'Pending', 'Paid', 'Late'],
         ]);
     }
-
+    
     /**
      * Processes an EMI payment.
      */
@@ -199,32 +224,106 @@ class LoanController extends Controller
 
         // NOTE: For simplicity, we assume staff handles the payment via cash/internal transfer.
         // In a real system, funds would be debited from a linked account.
-
+        
         try {
-            DB::transaction(function () use ($emi) {
+             DB::transaction(function () use ($emi) {
                 // Update EMI Status
                 $emi->status = 'Paid';
                 $emi->payment_date = now();
                 $emi->save();
-
+                
                 // OPTIONAL: Record an internal transaction or log the cash receipt.
-
+                
                 // Check if the loan is fully paid after this EMI
                 $pendingEmisCount = Emis::where('loan_id', $emi->loan_id)
-                    ->where('status', 'Pending')
-                    ->count();
-
+                                        ->where('status', 'Pending')
+                                        ->count();
+                
                 if ($pendingEmisCount === 0) {
                     $loan = Loans::findOrFail($emi->loan_id);
                     $loan->status = 'Paid';
                     $loan->save();
                 }
-            });
+             });
 
-            return redirect()->back()->with('success', "EMI #{$emi->id} paid successfully. Loan balance updated.");
+             return redirect()->back()->with('success', "EMI #{$emi->id} paid successfully. Loan balance updated.");
         } catch (\Exception $e) {
             Log::error("EMI payment failed for ID {$emi->id}: " . $e->getMessage());
             return redirect()->back()->with('error', 'Payment failed due to processing error.');
+        }
+    }
+    public function payEmiFromCustomer(Request $request, Emis $emi)
+    {
+        $request->validate([
+            'source_account_id' => 'required|exists:accounts,id',
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+        
+        $sourceAccountId = $request->source_account_id;
+        $paymentAmount = $request->amount;
+        $user = $request->user();
+
+        try {
+             DB::transaction(function () use ($emi, $sourceAccountId, $paymentAmount, $user) {
+                // 1. Authorization Check
+                $customer = Customers::where('email', $user->email)->firstOrFail();
+                
+                // Ensure the source account belongs to the logged-in customer
+                $sourceAccount = Accounts::lockForUpdate()
+                                        ->where('id', $sourceAccountId)
+                                        ->where('customer_id', $customer->id)
+                                        ->firstOrFail();
+                
+                // Ensure the EMI belongs to the customer's loan
+                if ($emi->loan->customer_id !== $customer->id) {
+                    throw new \Exception('EMI does not belong to the authenticated customer.');
+                }
+
+                // 2. Status and Funds Check
+                if ($emi->status === 'Paid') {
+                    throw new Exception('This EMI is already marked as paid.');
+                }
+                if ($sourceAccount->balance < $paymentAmount) {
+                    throw new Exception('Insufficient funds in the source account.');
+                }
+                if ($emi->amount_due > $paymentAmount) {
+                    throw new Exception('Payment amount is less than the amount due.');
+                }
+
+                // 3. Debit Source Account
+                $sourceAccount->balance -= $paymentAmount;
+                $sourceAccount->save();
+                
+                // 4. Update EMI Status
+                $emi->status = 'Paid';
+                $emi->payment_date = now();
+                $emi->save();
+                
+                // 5. Record Transaction (Debit)
+                Transactions::create([
+                    'account_id' => $sourceAccount->id,
+                    'type' => 'EMI Payment',
+                    'amount' => -$paymentAmount, // Negative since it's an outflow
+                    'description' => "EMI #{$emi->id} paid for Loan #{$emi->loan_id}.",
+                ]);
+
+                // 6. Check for Loan Closure
+                $pendingEmisCount = Emis::where('loan_id', $emi->loan_id)
+                                        ->where('status', 'Pending')
+                                        ->count();
+                
+                if ($pendingEmisCount === 0) {
+                    $loan = Loans::findOrFail($emi->loan_id);
+                    $loan->status = 'Paid';
+                    $loan->save();
+                }
+             });
+
+             return redirect()->back()->with('success', "EMI payment of $".number_format($paymentAmount, 2)." successful from Account #{$sourceAccountId}.");
+
+        } catch (Exception $e) {
+            Log::error("Customer EMI payment failed for ID {$emi->id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Payment failed: ' . $e->getMessage());
         }
     }
 }

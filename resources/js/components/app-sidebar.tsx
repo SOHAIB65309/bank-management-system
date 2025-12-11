@@ -15,7 +15,7 @@ import { dashboard } from '@/routes';
 import { type NavItem, type SharedData, type Role } from '@/types'; 
 import { Link, usePage } from '@inertiajs/react';
 // Import Clock icon, which was missing/incorrectly used before
-import { Banknote, BookOpen, Folder, LayoutGrid, User, Users, Landmark, FileText, Settings, Key, Clock } from 'lucide-react'; 
+import { Banknote, BookOpen, Folder, LayoutGrid, User, Users, Landmark, FileText, Settings, Key, Clock, ArrowRight, DollarSign } from 'lucide-react'; // Added ArrowRight, DollarSign for customer links
 import AppLogo from './app-logo';
 import React, { useMemo } from 'react';
 
@@ -25,16 +25,22 @@ const useUserRoles = () => {
     // Explicitly cast to Role[] as defined in resources/js/types/index.d.ts
     const roles: Role[] = auth.user.roles || []; 
     
+    const isAdmin = roles.some(role => role.name === 'admin');
+    const isCashier = roles.some(role => role.name === 'cashier');
+    const isLoanOfficer = roles.some(role => role.name === 'loan_officer');
+
     return {
-        // The .some() method now works correctly on the Role[] array
-        isAdmin: roles.some(role => role.name === 'admin'),
-        isCashier: roles.some(role => role.name === 'cashier'),
-        isLoanOfficer: roles.some(role => role.name === 'loan_officer'),
+        isAdmin,
+        isCashier,
+        isLoanOfficer,
+        // NEW: Check if the user is a Customer (no employee roles assigned)
+        isCustomer: !isAdmin && !isCashier && !isLoanOfficer && roles.length === 0,
+        isEmployee: isAdmin || isCashier || isLoanOfficer,
     };
 };
 
-// Define all potential navigation items
-const allNavItems: NavItem[] = [
+// Define Employee Navigation Items
+const employeeNavItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, roles: ['admin', 'cashier', 'loan_officer'] },
     
     // --- Admin Management ---
@@ -46,31 +52,44 @@ const allNavItems: NavItem[] = [
     
     // --- Account & Transaction Management ---
     { title: 'Accounts & Balance', href: '/accounts', icon: Landmark, roles: ['admin', 'cashier'] },
-    { title: 'Transactions', href: '/transactions', icon: Banknote, roles: ['admin', 'cashier'] },
+    { title: 'Teller Transactions', href: '/transactions', icon: Banknote, roles: ['admin', 'cashier'] },
 
     // --- Loan Management ---
     { title: 'Loan Applications', href: '/loans/applications', icon: FileText, roles: ['admin', 'loan_officer'] },
-    // FIXED: Using the imported Clock component instead of the string 'Clock'
     { title: 'EMI Tracking', href: '/loans/emis', icon: Clock, roles: ['admin', 'loan_officer'] }, 
 ];
 
+// Define Customer Navigation Items (Minimal and Self-Service)
+const customerNavItems: NavItem[] = [
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, roles: ['customer'] },
+    { title: 'Fund Transfer', href: '/customer/transfer', icon: ArrowRight, roles: ['customer'] }, // NEW ROUTE
+    { title: 'Loan Application', href: '/customer/loans/apply', icon: FileText, roles: ['customer'] }, 
+    { title: 'EMI Payments', href: '/customer/emis', icon: DollarSign, roles: ['customer'] }, // NEW ROUTE
+];
+
+
 // FIXED: Added the required 'roles' property to align with NavItem interface
 const footerNavItems: NavItem[] = [
-    { title: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'cashier', 'loan_officer'] },
-    { title: 'Repository', href: 'https://github.com/laravel/react-starter-kit', icon: Folder, roles: ['admin', 'cashier', 'loan_officer'] },
-    { title: 'Documentation', href: 'https://laravel.com/docs/starter-kits#react', icon: BookOpen, roles: ['admin', 'cashier', 'loan_officer'] },
+    { title: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'cashier', 'loan_officer', 'customer'] },
+    { title: 'Documentation', href: 'https://laravel.com/docs/starter-kits#react', icon: BookOpen, roles: ['admin', 'cashier', 'loan_officer', 'customer'] },
 ];
 
 export function AppSidebar() {
-    const { isAdmin, isCashier, isLoanOfficer } = useUserRoles();
+    const { isAdmin, isCashier, isLoanOfficer, isCustomer, isEmployee } = useUserRoles();
 
-    // Filter navigation items based on user's roles
+    // Determine the navigation set and filter them
+    const activeNavSet = isCustomer ? customerNavItems : employeeNavItems;
+
     const mainNavItems = useMemo(() => {
-        return allNavItems.filter(item => {
-            // If roles property is missing or empty, assume public/default access
+        if (isCustomer) {
+            // Customers see all links defined in customerNavItems
+            return customerNavItems;
+        }
+
+        // Employees see filtered links based on their roles
+        return employeeNavItems.filter(item => {
             if (!item.roles || item.roles.length === 0) return true; 
             
-            // Check if the user possesses any of the required roles for this item
             return item.roles.some(role => {
                 if (role === 'admin' && isAdmin) return true;
                 if (role === 'cashier' && isCashier) return true;
@@ -78,16 +97,23 @@ export function AppSidebar() {
                 return false;
             });
         });
-    }, [isAdmin, isCashier, isLoanOfficer]);
+    }, [isCustomer, isAdmin, isCashier, isLoanOfficer]);
+
+    // Determine if the sidebar should be hidden (for general customers)
+    if (isCustomer) {
+        // If the user is a customer, we don't display the full sidebar in the AppLayout 
+        // because we are relying on CustomerLayout to provide a minimal interface.
+        // We render a minimal, uncollapsible sidebar only for display consistency.
+    }
+
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
+        <Sidebar collapsible={isEmployee ? "icon" : false} variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={dashboard()} prefetch>
-                                {/* Placeholder for your App Logo component */}
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

@@ -1,12 +1,16 @@
-import CashierLayout from '@/layouts/cashier/layout';
+import CustomerLayout from '@/layouts/customer/CustomerLayout'; 
 import AdminLayout from '@/layouts/admin/layout';
+import LoanOfficerLayout from '@/layouts/loanOfficer/layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage, useForm } from '@inertiajs/react';
-import React from 'react';
-import { ArrowLeft, User, DollarSign, Clock, FileText, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { ArrowLeft, User, DollarSign, Clock, FileText, CheckCircle, XCircle } from 'lucide-react';
 
 // --- Type Definitions ---
 interface LoanApplyProps {
+    customerId?: number; 
+    customerName?: string;
+    
     flash?: {
         success?: string;
         error?: string;
@@ -57,36 +61,67 @@ const formatCurrency = (amount: number) => {
 };
 
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'New Loan Application', href: '/loans/apply' },
-];
-
 export default function LoanApply() {
     const pageProps = usePage<SharedData & LoanApplyProps>().props;
     const { flash, auth } = pageProps;
+    
+    // DEFENSIVELY extract roles, ensuring it's an array if undefined
+    const roles = auth.user.roles || [];
+
+    // Determine context: True if customerId and customerName are passed (meaning customer portal view)
+    const isCustomerPortal = !!pageProps.customerId;
+    const initialCustomerId = pageProps.customerId ? pageProps.customerId.toString() : '';
+
+    // Determine layout based on user role
+    const isAdmin = roles.some(role => role.name === 'admin');
+    const isLoanOfficer = roles.some(role => role.name === 'loan_officer');
+    
+    let Layout;
+    if (isCustomerPortal) {
+        Layout = CustomerLayout;
+    } else if (isAdmin) {
+        Layout = AdminLayout;
+    } else if (isLoanOfficer) {
+        Layout = LoanOfficerLayout;
+    } else {
+        Layout = AdminLayout; // Default to Admin layout for other staff/general
+    }
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        customer_id: '',
+        // Automatically set customer_id from props if available, otherwise blank for staff entry
+        customer_id: initialCustomerId, 
         amount: '10000',
-        interest_rate: '7.5', // Default competitive rate
-        term_months: '36',     // Default 3 years
+        interest_rate: '7.5',
+        term_months: '36',
     });
 
     // Client-side EMI Calculation for display
     const principal = parseFloat(data.amount);
     const rate = parseFloat(data.interest_rate);
     const months = parseInt(data.term_months);
-    const monthlyEmi = calculateEmi(principal, rate, months);
+    const monthlyEmi = useMemo(() => calculateEmi(principal, rate, months), [principal, rate, months]);
     
-    // Determine layout based on user role
-    const isAdmin = auth.user.roles.some(role => role.name === 'admin');
-    const Layout = isAdmin ? AdminLayout : CashierLayout; // Cashiers can also submit applications
-
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/loans/apply');
+        
+        post('/customer/loans/apply', {
+            onSuccess: () => {
+                // Reset form fields after successful submission
+                reset('amount', 'interest_rate', 'term_months');
+            },
+            onError: () => {
+                // Errors are displayed via the {errors} object and flash message.
+            },
+            // Submits to the centralized loans.store route
+            preserveScroll: true,
+        });
     };
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'New Loan Application', href: isCustomerPortal ? '/customer/loans/apply' : '/loans/applications' },
+    ];
+
 
     return (
         <Layout breadcrumbs={breadcrumbs}>
@@ -97,13 +132,21 @@ export default function LoanApply() {
                 {/* Header and Back Button */}
                 <div className="flex justify-between items-center border-b pb-4 dark:border-gray-700">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">New Loan Application</h1>
-                        <p className="text-sm text-muted-foreground">Submit a request for a new term loan on behalf of a customer.</p>
+                        <h1 className="text-3xl font-bold tracking-tight">Loan Application</h1>
+                        <p className="text-sm text-muted-foreground">
+                            {isCustomerPortal ? 
+                                `Welcome, ${pageProps.customerName}. Apply for a new loan.` : 
+                                `Submit a request for a new term loan on behalf of a customer.`
+                            }
+                        </p>
                     </div>
-                    <Link href="/loans/applications" className={getButtonClasses('outline', 'default')}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        View Applications
-                    </Link>
+                    
+                    {!isCustomerPortal && (
+                        <Link href="/loans/applications" className={getButtonClasses('outline', 'default')}>
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            View Applications
+                        </Link>
+                    )}
                 </div>
                 
                 {/* Status Messages (Success/Error) */}
@@ -124,24 +167,28 @@ export default function LoanApply() {
                         {/* --- Section 1: Customer & Loan Amount --- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b pb-6 dark:border-gray-700">
                             
-                            {/* Customer ID */}
-                            <div>
-                                <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1"><User className='h-4 w-4'/> Customer ID</label>
-                                <input
-                                    id="customer_id"
-                                    type="number"
-                                    value={data.customer_id}
-                                    onChange={(e) => setData('customer_id', e.target.value)}
-                                    required
-                                    placeholder="e.g., 1 or 101"
-                                    className={`w-full border ${errors.customer_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-2 transition duration-150`}
-                                />
-                                {errors.customer_id && <p className="mt-1 text-sm text-red-600">{errors.customer_id}</p>}
-                                <p className="mt-2 text-xs text-muted-foreground">Ensure the Customer ID exists in the system.</p>
-                            </div>
-
+                            {/* Customer ID (CONDITIONAL DISPLAY) */}
+                            {!isCustomerPortal ? (
+                                <div>
+                                    <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1"><User className='h-4 w-4'/> Customer ID</label>
+                                    <input
+                                        id="customer_id"
+                                        type="number"
+                                        value={data.customer_id}
+                                        onChange={(e) => setData('customer_id', e.target.value)}
+                                        required
+                                        placeholder="e.g., 1 or 101"
+                                        className={`w-full border ${errors.customer_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-2 transition duration-150`}
+                                    />
+                                    {errors.customer_id && <p className="mt-1 text-sm text-red-600">{errors.customer_id}</p>}
+                                </div>
+                            ) : (
+                                // Hidden input for customer portal submission
+                                <input type="hidden" name="customer_id" value={data.customer_id} />
+                            )}
+                            
                             {/* Loan Amount */}
-                            <div>
+                            <div className={!isCustomerPortal ? '' : 'md:col-span-2'}>
                                 <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1"><DollarSign className='h-4 w-4'/> Principal Amount (USD)</label>
                                 <input
                                     id="amount"
@@ -166,7 +213,8 @@ export default function LoanApply() {
                                 <input
                                     id="term_months"
                                     type="number"
-                                    step="12"
+                                    // FIX: Changed step from 12 to 1 to allow any valid integer input
+                                    step="1"
                                     min="6"
                                     max="120"
                                     value={data.term_months}
@@ -207,8 +255,8 @@ export default function LoanApply() {
                         <div className="pt-4 border-t dark:border-gray-700">
                             <button
                                 type="submit"
-                                disabled={processing || monthlyEmi <= 0}
-                                className={`${getButtonClasses('default', 'default', processing || monthlyEmi <= 0)} w-full md:w-auto px-6`}
+                                disabled={processing || monthlyEmi <= 0 || !data.customer_id}
+                                className={`${getButtonClasses('default', 'default', processing || monthlyEmi <= 0 || !data.customer_id)} w-full md:w-auto px-6`}
                             >
                                 {processing ? 'Submitting...' : (
                                     <span className="flex items-center">

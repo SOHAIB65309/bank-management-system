@@ -165,8 +165,6 @@ class TransactionController extends Controller
                 // 2. Increase Target Balance
                 $targetAccount->balance += $amount;
                 $targetAccount->save();
-
-                // 3. Record Transactions (Outflow from source, Inflow to target)
                 Transactions::create([
                     'account_id' => $sourceId,
                     'type' => 'Transfer (Out)',

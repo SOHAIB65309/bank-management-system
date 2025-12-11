@@ -13,4 +13,9 @@ class customers extends Model
     {
         return $this->HasMany(accounts::class,'customer_id');
     }
+    public function loans()
+    {
+        return $this->HasMany(loans::class,'customer_id');
+    }
+    
 }

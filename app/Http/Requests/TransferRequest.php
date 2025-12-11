@@ -8,7 +8,14 @@ class TransferRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() && ($this->user()->hasRole('admin') || $this->user()->hasRole('cashier'));
+       // Check 1: User is an employee (Admin or Cashier)
+        $isEmployee = $this->user()->hasRole(['admin', 'cashier']);
+        
+        // Check 2: User is a pure customer (uses the new method)
+        $isCustomer = $this->user()->IsCustomer();
+
+        // Allow if the user is an authorized employee OR a logged-in customer.
+        return $this->user() && ($isEmployee || $isCustomer);
     }
 
     public function rules(): array

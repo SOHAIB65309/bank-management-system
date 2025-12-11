@@ -15,7 +15,7 @@ interface EmiRecord {
     loan_id: number;
     due_date: string;
     amount_due: number;
-    payment_status: 'Pending' | 'Paid' | 'Late';
+    status: 'Pending' | 'Paid' | 'Late';
     loan: LoanData;
 }
 
@@ -67,7 +67,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'EMI Tracking', href: '/loans/emis' },
 ];
 
-const StatusBadge: React.FC<{ status: EmiRecord['payment_status'] }> = ({ status }) => {
+const StatusBadge: React.FC<{ status: EmiRecord['status'] }> = ({ status }) => {
     let color = 'bg-gray-100 text-gray-800';
     if (status === 'Paid') color = 'bg-green-100 text-green-800';
     else if (status === 'Pending') color = 'bg-yellow-100 text-yellow-800';
@@ -78,7 +78,7 @@ const StatusBadge: React.FC<{ status: EmiRecord['payment_status'] }> = ({ status
 
 // --- Action Handler ---
 const handleEmiPayment = (emi: EmiRecord) => {
-    if (emi.payment_status === 'Paid') return;
+    if (emi.status === 'Paid') return;
     
     const confirmMessage = `Confirm payment of ${formatCurrency(emi.amount_due)} for EMI #${emi.id} (Loan #${emi.loan_id})?`;
 
@@ -192,8 +192,8 @@ export default function EmiIndex() {
                             
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {emisData.map(emi => {
-                                    const isDueOrLate = emi.payment_status === 'Pending' || emi.payment_status === 'Late';
-                                    const rowClass = emi.payment_status === 'Late' ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                                    const isDueOrLate = emi.status === 'Pending' || emi.status === 'Late';
+                                    const rowClass = emi.status === 'Late' ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700';
 
                                     return (
                                         <tr key={emi.id} className={`${rowClass} transition duration-150`}>
@@ -209,7 +209,7 @@ export default function EmiIndex() {
                                                 {new Date(emi.due_date).toLocaleDateString()}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <StatusBadge status={emi.payment_status} />
+                                                <StatusBadge status={emi.status} />
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 {isDueOrLate ? (
@@ -221,7 +221,7 @@ export default function EmiIndex() {
                                                     </button>
                                                 ) : (
                                                     <span className="text-sm text-green-600 dark:text-green-400 flex justify-end items-center gap-1">
-                                                        <Check className='h-4 w-4'/> Paid
+                                                        <Check className='h-4 w-4'/> {(emi.status)}
                                                     </span>
                                                 )}
                                             </td>

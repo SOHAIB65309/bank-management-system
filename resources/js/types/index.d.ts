@@ -7,7 +7,7 @@ import { InertiaLinkProps } from '@inertiajs/react';
 
     export interface Role {
         id: number;
-        name: 'admin' | 'cashier' | 'loan_officer'; // Define literal types for roles
+        name: 'admin' | 'cashier' | 'loan_officer'|'customer'; // Define literal types for roles
     }
 
     export interface BreadcrumbItem {
@@ -24,7 +24,7 @@ import { InertiaLinkProps } from '@inertiajs/react';
         title: string;
         href: NonNullable<InertiaLinkProps['href']>;
         icon?: LucideIcon | string; // Allow string for custom icons or placeholders
-        roles: ('admin' | 'cashier' | 'loan_officer')[] ; // Correct array of literal strings
+        roles: ('admin' | 'cashier' | 'loan_officer'|'customer')[] ; // Correct array of literal strings
         isActive?: boolean;
     }
 

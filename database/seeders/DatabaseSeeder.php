@@ -30,11 +30,6 @@ class DatabaseSeeder extends Seeder
         }
 
         $roles = Roles::pluck('id', 'name');
-
-
-        // 2. Create Employee Users and Assign Roles
-        
-        // --- 2.1. Admin User ---
         $adminUser = User::firstOrCreate(
             ['email' => 'admin@bank.com'],
             [
