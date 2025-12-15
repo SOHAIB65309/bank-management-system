@@ -22,6 +22,6 @@ class accounts extends Model
     // One-to-Many relationship: An Account has many Transactions
     public function transactions(): HasMany
     {
-        return $this->hasMany(Transactions::class);
+        return $this->hasMany(Transactions::class,'account_id');
     }
 }

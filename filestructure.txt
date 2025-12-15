@@ -112,6 +112,23 @@
     |-- hot
     |-- index.php
     |-- logo.svg
+    |-- outputs
+        |-- admin
+            |-- screencapture-localhost-8000-accounts-2025-12-15-10_37_41.png
+            |-- screencapture-localhost-8000-admin-employees-2025-12-15-10_20_09.png
+            |-- screencapture-localhost-8000-admin-employees-create-2025-12-15-10_30_10.png
+            |-- screencapture-localhost-8000-admin-roles-2025-12-15-10_33_48.png
+            |-- screencapture-localhost-8000-customers-1-2025-12-15-10_37_12.png
+            |-- screencapture-localhost-8000-customers-2025-12-15-10_34_12.png
+            |-- screencapture-localhost-8000-dashboard-2025-12-15-10_19_40.png
+            |-- screencapture-localhost-8000-loans-applications-2025-12-15-10_38_50.png
+            |-- screencapture-localhost-8000-loans-emis-2025-12-15-10_39_31.png
+            |-- screencapture-localhost-8000-settings-profile-2025-12-15-10_40_26.png
+            |-- screencapture-localhost-8000-transactions-2025-12-15-10_38_04.png
+            |-- screencapture-localhost-8000-transactions-2025-12-15-10_38_18.png
+            |-- screencapture-localhost-8000-transactions-2025-12-15-10_38_30.png
+        |-- screencapture-localhost-8000-2025-12-15-10_17_20.png
+        |-- screencapture-localhost-8000-login-2025-12-15-10_18_33.png
     |-- robots.txt
 |-- README.md
 |-- resources

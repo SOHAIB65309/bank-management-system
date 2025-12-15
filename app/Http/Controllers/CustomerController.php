@@ -103,7 +103,7 @@ class CustomerController extends Controller
         // Calculate the total balance for the customer across all accounts
         $totalBalance = $customer->accounts->sum('balance');
 
-        return Inertia::render('Customer/CustomerShow', [
+        return Inertia::render('customer/CustomerShow', [
             'customer' => $customer,
             'totalBalance' => $totalBalance,
             'accountTypes' => ['Savings', 'Current', 'Fixed Deposit'], // For opening new accounts
@@ -116,7 +116,7 @@ class CustomerController extends Controller
     {
         $kycStatuses = ['Pending', 'Verified', 'Rejected'];
         
-        return Inertia::render('Customer/CustomerEdit', [
+        return Inertia::render('customer/CustomerEdit', [
             'customer' => $customer,
             'kycStatuses' => $kycStatuses,
         ]);

@@ -23,7 +23,7 @@ export default function AuthLayoutTemplate({
                     {/* Bank Logo / Branding */}
                     <div className="mb-8 flex items-center">
                         <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                            {/* Simple Bank Icon (e.g., a vault or a stack of coins) */}
+                            
                             <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 18.5L4.5 16v-4l7.5 3.5 7.5-3.5v4l-7.5 4.5zM12 11L4.5 7.5 12 4l7.5 3.5-7.5 3.5z" />
                         </svg>
                         <span className="ml-3 text-2xl font-bold text-gray-900 dark:text-white">

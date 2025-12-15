@@ -31,7 +31,7 @@ class CustomerPortalController extends Controller
             ->select('id', 'account_type', 'balance')
             ->get();
 
-        return Inertia::render(component: 'customer/CustomerTransfer', [
+        return Inertia::render( 'customer/CustomerTransfer', [
             'customerAccounts' => $customerAccounts,
             'customerName' => $customer->name,
             'customerId' => $customer->id,

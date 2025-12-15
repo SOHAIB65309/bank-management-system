@@ -17,8 +17,6 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
     ]);
 })->name('home');
-
-// --- CUSTOMER AUTHENTICATION (Explicit Routes) ---
 Route::prefix('customer')->group(function () {
     // Customer Register Form
     Route::get('/register', [CustomerAuthController::class, 'registerForm'])->name('customer.register.form');
